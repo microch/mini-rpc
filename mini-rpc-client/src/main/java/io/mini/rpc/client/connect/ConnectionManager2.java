@@ -1,11 +1,11 @@
 package io.mini.rpc.client.connect;
 
 import io.mini.rpc.client.handler.RpcClientHandler;
+import io.mini.rpc.client.handler.RpcClientHandler2;
 import io.mini.rpc.client.handler.RpcClientInitializer;
-import io.mini.rpc.client.route.RpcLoadBalance;
-import io.mini.rpc.client.route.RpcLoadBalanceRoundRobin;
-import io.mini.rpc.protocol.RpcProtocol;
-import io.mini.rpc.protocol.RpcServiceInfo;
+import io.mini.rpc.client.route.RpcLoadBalance2;
+import io.mini.rpc.client.route.RpcLoadBalanceRoundRobin2;
+import io.mini.rpc.protocol.RpcProtocol2;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -16,26 +16,30 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 /**
  * @author caohao
  * @date 2022/8/17
  */
-public class ConnectionManager {
+public class ConnectionManager2 {
 
-    private static final Logger logger = LoggerFactory.getLogger(ConnectionManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConnectionManager2.class);
 
     private static final long WAIT_TIMEOUT = 5000;
 
-    private final Map<RpcProtocol, RpcClientHandler> connectedServerNodes = new ConcurrentHashMap<>();
+    private final Map<RpcProtocol2, RpcClientHandler2> connectedServerNodes = new ConcurrentHashMap<>();
+    private final Map<String, List<RpcProtocol2>> serviceInstances = new ConcurrentHashMap<>();
 
     private final EventLoopGroup eventLoopGroup = new NioEventLoopGroup(4);
 
@@ -44,80 +48,78 @@ public class ConnectionManager {
 
     private volatile boolean isRunning = true;
 
-    private static volatile ConnectionManager instance;
+    private static volatile ConnectionManager2 instance;
 
-    private final CopyOnWriteArraySet<RpcProtocol> rpcProtocolSet = new CopyOnWriteArraySet<>();
+//    private final CopyOnWriteArraySet<RpcProtocol2> rpcProtocolSet = new CopyOnWriteArraySet<>();
 
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition connected = lock.newCondition();
 
-    private final RpcLoadBalance loadBalance = new RpcLoadBalanceRoundRobin();
+    private final RpcLoadBalance2 loadBalance = new RpcLoadBalanceRoundRobin2();
 
-    private ConnectionManager() {
+    private ConnectionManager2() {
     }
 
-    public static ConnectionManager getInstance() {
+    public static ConnectionManager2 getInstance() {
         if (instance == null) {
-            synchronized (ConnectionManager.class) {
+            synchronized (ConnectionManager2.class) {
                 if (instance == null) {
-                    instance = new ConnectionManager();
+                    instance = new ConnectionManager2();
                 }
             }
         }
         return instance;
     }
 
-    public void updateConnectedServer(List<RpcProtocol> serviceList) {
-        if (!CollectionUtils.isEmpty(serviceList)) {
-            HashSet<RpcProtocol> serviceSet = new HashSet<>(serviceList.size());
-            serviceSet.addAll(serviceList);
-
+    public void updateConnectedServer(Map<String, List<RpcProtocol2>> serviceMap) {
+        if (!CollectionUtils.isEmpty(serviceMap)) {
+            Set<RpcProtocol2> serviceSet = serviceMap.values()
+                    .stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toSet());
             // 新的
-            for (final RpcProtocol protocol : serviceSet) {
-                if (!rpcProtocolSet.contains(protocol)) {
+            for (final RpcProtocol2 protocol : serviceSet) {
+                if (!connectedServerNodes.containsKey(protocol)) {
                     connectServerNode(protocol);
                 }
             }
             // 旧的
-            for (RpcProtocol protocol : rpcProtocolSet) {
+            for (RpcProtocol2 protocol : connectedServerNodes.keySet()) {
                 if (!serviceSet.contains(protocol)) {
-                    logger.info("Remove invalid service: " + protocol.toJson());
+                    logger.info("Remove invalid service: " + protocol.toString());
                     removeAndCloseHandler(protocol);
                 }
             }
+            serviceInstances.clear();
+            serviceInstances.putAll(serviceMap);
         } else {
             logger.error("No available service!");
-            for (RpcProtocol protocol : rpcProtocolSet) {
+            for (RpcProtocol2 protocol : connectedServerNodes.keySet()) {
                 removeAndCloseHandler(protocol);
             }
         }
 
     }
 
-    public void updateConnectedServer(RpcProtocol rpcProtocol, PathChildrenCacheEvent.Type type) {
-        if (rpcProtocol == null) {
+    public void updateConnectedServer(String serviceName, List<RpcProtocol2> protocol2s) {
+        if (StringUtils.isEmpty(serviceName)) {
             return;
         }
-        if (type == PathChildrenCacheEvent.Type.CHILD_ADDED && !rpcProtocolSet.contains(rpcProtocol)) {
-            connectServerNode(rpcProtocol);
-        } else if (type == PathChildrenCacheEvent.Type.CHILD_UPDATED) {
-            //TODO We may don't need to reconnect remote server if the server'IP and server'port are not changed
-            removeAndCloseHandler(rpcProtocol);
-            connectServerNode(rpcProtocol);
-        } else if (type == PathChildrenCacheEvent.Type.CHILD_REMOVED) {
-            removeAndCloseHandler(rpcProtocol);
-        } else {
-            throw new IllegalArgumentException("Unknow type:" + type);
+        serviceInstances.put(serviceName, protocol2s);
+        Set<RpcProtocol2> connected = connectedServerNodes.keySet();
+        for (RpcProtocol2 protocol : protocol2s) {
+            if (!connected.contains(protocol)) {
+                connectServerNode(protocol);
+            }
         }
     }
 
-    private void removeAndCloseHandler(RpcProtocol protocol) {
-        RpcClientHandler handler = connectedServerNodes.get(protocol);
+    private void removeAndCloseHandler(RpcProtocol2 protocol) {
+        RpcClientHandler2 handler = connectedServerNodes.get(protocol);
         if (handler != null) {
             handler.close();
         }
         connectedServerNodes.remove(protocol);
-        rpcProtocolSet.remove(protocol);
     }
 
     private void signalAvailableHandler() {
@@ -129,17 +131,7 @@ public class ConnectionManager {
         }
     }
 
-    private void connectServerNode(RpcProtocol protocol) {
-        if (CollectionUtils.isEmpty(protocol.getServiceInfoList())) {
-            logger.info("No service on node, host: {}, port: {}", protocol.getHost(), protocol.getPort());
-            return;
-        }
-        rpcProtocolSet.add(protocol);
-        logger.info("New service node, host: {}, port: {}", protocol.getHost(), protocol.getPort());
-        for (RpcServiceInfo serviceProtocol : protocol.getServiceInfoList()) {
-            logger.info("New service info, name: {}, version: {}", serviceProtocol.getServiceName(), serviceProtocol.getVersion());
-        }
-
+    private void connectServerNode(RpcProtocol2 protocol) {
         final InetSocketAddress remotePeer = new InetSocketAddress(protocol.getHost(), protocol.getPort());
         threadPoolExecutor.submit(() -> {
             Bootstrap b = new Bootstrap();
@@ -150,7 +142,7 @@ public class ConnectionManager {
             channelFuture.addListener((ChannelFutureListener) future -> {
                 if (future.isSuccess()) {
                     logger.info("Successfully connect to remote server, remote peer = " + remotePeer);
-                    RpcClientHandler handler = future.channel().pipeline().get(RpcClientHandler.class);
+                    RpcClientHandler2 handler = future.channel().pipeline().get(RpcClientHandler2.class);
                     connectedServerNodes.put(protocol, handler);
                     handler.setRpcProtocol(protocol);
                     signalAvailableHandler();
@@ -161,14 +153,13 @@ public class ConnectionManager {
         });
     }
 
-    public void removeHandler(RpcProtocol protocol) {
-        rpcProtocolSet.remove(protocol);
+    public void removeHandler(RpcProtocol2 protocol) {
         connectedServerNodes.remove(protocol);
         logger.info("Remove one connection, host: {}, port: {}", protocol.getHost(), protocol.getPort());
     }
 
 
-    public RpcClientHandler chooseHandler(String serviceKey) throws Exception {
+    public RpcClientHandler2 chooseHandler(String serviceKey) throws Exception {
         int size = connectedServerNodes.values().size();
         while (isRunning && size <= 0) {
             try {
@@ -178,8 +169,9 @@ public class ConnectionManager {
                 logger.error("Waiting for available service is interrupted!", e);
             }
         }
-        RpcProtocol rpcProtocol = loadBalance.route(serviceKey, connectedServerNodes);
-        RpcClientHandler handler = connectedServerNodes.get(rpcProtocol);
+
+        RpcProtocol2 rpcProtocol = loadBalance.route(serviceKey, serviceInstances.getOrDefault(serviceKey, new ArrayList<>()));
+        RpcClientHandler2 handler = connectedServerNodes.get(rpcProtocol);
         if (handler == null) {
             throw new Exception("Can not get available connection");
         }
@@ -198,7 +190,8 @@ public class ConnectionManager {
 
     public void stop() {
         isRunning = false;
-        for (RpcProtocol rpcProtocol : rpcProtocolSet) {
+        Set<RpcProtocol2> rpcProtocols = connectedServerNodes.keySet();
+        for (RpcProtocol2 rpcProtocol : rpcProtocols) {
             removeAndCloseHandler(rpcProtocol);
         }
         signalAvailableHandler();

@@ -10,13 +10,7 @@ import io.mini.rpc.api.DemoService;
 @MiniRpcService(DemoService.class)
 public class DemoServiceImpl implements DemoService {
     @Override
-    public String hahaha(String name) {
-        return "hahaha";
-    }
-
-    @Override
-    public String sayHello(String name) {
-        System.out.println("Hello " + name + ", request from consumer: ");
-        return "Hello " + name;
+    public Integer add(int a, int b) {
+        return a + b;
     }
 }

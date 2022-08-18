@@ -15,7 +15,7 @@ import java.util.List;
  * @date 2022/8/18
  */
 public class CuratorClient {
-    private CuratorFramework client;
+    private final CuratorFramework client;
 
     public CuratorClient(String connectString, String namespace, int sessionTimeout, int connectionTimeout) {
         client = CuratorFrameworkFactory.builder().namespace(namespace).connectString(connectString)
@@ -44,6 +44,12 @@ public class CuratorClient {
     public String createPathData(String path, byte[] data) throws Exception {
         return client.create().creatingParentsIfNeeded()
                 .withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
+                .forPath(path, data);
+    }
+
+    public String createPathData2(String path, byte[] data) throws Exception {
+        return client.create().creatingParentsIfNeeded()
+                .withMode(CreateMode.EPHEMERAL)
                 .forPath(path, data);
     }
 

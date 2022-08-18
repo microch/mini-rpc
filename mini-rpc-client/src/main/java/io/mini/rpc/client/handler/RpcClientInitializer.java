@@ -1,6 +1,9 @@
 package io.mini.rpc.client.handler;
 
-import io.mini.rpc.codec.*;
+import io.mini.rpc.codec.Beat;
+import io.mini.rpc.codec.RpcDecoder;
+import io.mini.rpc.codec.RpcEncoder;
+import io.mini.rpc.codec.RpcResponse;
 import io.mini.rpc.serializer.JsonSerializer;
 import io.mini.rpc.serializer.Serializer;
 import io.netty.channel.ChannelInitializer;
@@ -9,8 +12,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.timeout.IdleStateHandler;
 
-import java.util.Map;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -31,6 +32,6 @@ public class RpcClientInitializer extends ChannelInitializer<SocketChannel> {
         cp.addLast(new RpcEncoder(serializer));
         cp.addLast(new LengthFieldBasedFrameDecoder(65536, 0, 4, 0, 0));
         cp.addLast(new RpcDecoder(serializer, RpcResponse.class));
-        cp.addLast(new RpcClientHandler());
+        cp.addLast(new RpcClientHandler2());
     }
 }

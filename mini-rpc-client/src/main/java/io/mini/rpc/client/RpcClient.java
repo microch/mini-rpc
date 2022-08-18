@@ -2,6 +2,7 @@ package io.mini.rpc.client;
 
 import io.mini.rpc.annotation.MiniRpcAutowired;
 import io.mini.rpc.client.connect.ConnectionManager;
+import io.mini.rpc.client.connect.ConnectionManager2;
 import io.mini.rpc.client.discovery.ServiceDiscovery;
 import io.mini.rpc.client.proxy.ObjectProxy;
 import org.slf4j.Logger;
@@ -65,7 +66,7 @@ public class RpcClient implements ApplicationContextAware, DisposableBean {
     }
 
     public void stop() {
-        ConnectionManager.getInstance().stop();
+        ConnectionManager2.getInstance().stop();
     }
 
     @Override

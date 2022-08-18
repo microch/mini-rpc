@@ -25,6 +25,7 @@
         <guava.version>31.1-jre</guava.version>
         <jackson.version>2.13.3</jackson.version>
         <curator.version>5.3.0</curator.version>
+        <jetcd-version>0.7.3</jetcd-version>
     </properties>
 
     <dependencies>
@@ -86,6 +87,12 @@
             <groupId>org.apache.curator</groupId>
             <artifactId>curator-recipes</artifactId>
             <version>${curator.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.etcd</groupId>
+            <artifactId>jetcd-core</artifactId>
+            <version>${jetcd-version}</version>
         </dependency>
 
     </dependencies>
