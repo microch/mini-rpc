@@ -1,14 +1,12 @@
 package io.mini.rpc.client.discovery.zookeeper;
 
 import io.mini.rpc.client.connect.ConnectionManager;
-import io.mini.rpc.client.discovery.ServiceDiscovery;
+import io.mini.rpc.registry.ServiceDiscovery;
 import io.mini.rpc.protocol.RpcProtocol;
-import io.mini.rpc.zookeeper.Constant;
-import io.mini.rpc.zookeeper.CuratorClient;
-import org.apache.curator.framework.CuratorFramework;
+import io.mini.rpc.registry.zookeeper.Constant;
+import io.mini.rpc.registry.zookeeper.CuratorClient;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

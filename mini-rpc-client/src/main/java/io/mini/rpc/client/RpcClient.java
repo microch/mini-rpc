@@ -1,9 +1,8 @@
 package io.mini.rpc.client;
 
 import io.mini.rpc.annotation.MiniRpcAutowired;
-import io.mini.rpc.client.connect.ConnectionManager;
 import io.mini.rpc.client.connect.ConnectionManager2;
-import io.mini.rpc.client.discovery.ServiceDiscovery;
+import io.mini.rpc.registry.ServiceDiscovery;
 import io.mini.rpc.client.proxy.ObjectProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

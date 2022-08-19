@@ -3,6 +3,7 @@ package io.mini.rpc.protocol;
 import io.mini.rpc.utils.JsonUtil;
 import io.mini.rpc.utils.ServiceUtil;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.Objects;
  * @author caohao
  * @date 2022/8/17
  */
-public class RpcProtocol2 implements Serializable {
+public class RpcProtocol2 implements Serializable, Comparable<RpcProtocol2> {
     private static final long serialVersionUID = -1102180055595190700L;
     private String host;
     private int port;
@@ -64,5 +65,10 @@ public class RpcProtocol2 implements Serializable {
                 "host='" + host + '\'' +
                 ", port=" + port +
                 '}';
+    }
+
+    @Override
+    public int compareTo(@Nonnull RpcProtocol2 o) {
+        return this.host.compareTo(o.host);
     }
 }

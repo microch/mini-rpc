@@ -1,4 +1,4 @@
-package io.mini.rpc.server.registry;
+package io.mini.rpc.registry;
 
 import java.util.Collection;
 import java.util.List;

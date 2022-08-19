@@ -1,12 +1,10 @@
 package io.mini.rpc.client.discovery.zookeeper;
 
-import io.mini.rpc.client.connect.ConnectionManager;
 import io.mini.rpc.client.connect.ConnectionManager2;
-import io.mini.rpc.client.discovery.ServiceDiscovery;
-import io.mini.rpc.protocol.RpcProtocol;
+import io.mini.rpc.registry.ServiceDiscovery;
 import io.mini.rpc.protocol.RpcProtocol2;
-import io.mini.rpc.zookeeper.Constant;
-import io.mini.rpc.zookeeper.CuratorClient;
+import io.mini.rpc.registry.zookeeper.Constant;
+import io.mini.rpc.registry.zookeeper.CuratorClient;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.slf4j.Logger;
@@ -14,9 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -67,13 +63,13 @@ public class ZookeeperServiceDiscovery2 implements ServiceDiscovery {
     private void getServiceAndUpdateServer() {
         try {
             List<String> serviceList = curatorClient.getChildren(Constant.ZK_REGISTRY_PATH);
-            Map<String, List<RpcProtocol2>> dataMap = new HashMap<>();
+            Map<String, TreeSet<RpcProtocol2>> dataMap = new HashMap<>();
 
             for (String service : serviceList) {
                 logger.debug("Service: " + service);
                 List<String> instances = curatorClient.getChildren(Constant.ZK_REGISTRY_PATH + "/" + service);
-                List<RpcProtocol2> protocols = instances.stream().map(RpcProtocol2::new).collect(Collectors.toList());
-                dataMap.put(service, protocols);
+                Set<RpcProtocol2> protocols = instances.stream().map(RpcProtocol2::new).collect(Collectors.toSet());
+                dataMap.put(service, new TreeSet<>(protocols));
             }
             logger.debug("Service node data: {}", dataMap);
             //Update the service info based on the latest data
@@ -83,7 +79,7 @@ public class ZookeeperServiceDiscovery2 implements ServiceDiscovery {
         }
     }
 
-    private void updateConnectedServer(Map<String, List<RpcProtocol2>> dataMap) {
+    private void updateConnectedServer(Map<String, TreeSet<RpcProtocol2>> dataMap) {
         ConnectionManager2.getInstance().updateConnectedServer(dataMap);
     }
 
@@ -95,8 +91,8 @@ public class ZookeeperServiceDiscovery2 implements ServiceDiscovery {
         if (!StringUtils.isEmpty(serviceName)) {
             try {
                 List<String> instances = curatorClient.getChildren(Constant.ZK_REGISTRY_PATH + "/" + serviceName);
-                List<RpcProtocol2> protocols = instances.stream().map(RpcProtocol2::new).collect(Collectors.toList());
-                ConnectionManager2.getInstance().updateConnectedServer(serviceName, protocols);
+                Set<RpcProtocol2> protocols = instances.stream().map(RpcProtocol2::new).collect(Collectors.toSet());
+                ConnectionManager2.getInstance().updateConnectedServer(serviceName, new TreeSet<>(protocols));
             } catch (Exception e) {
                 logger.error("Child update failed,", e);
             }

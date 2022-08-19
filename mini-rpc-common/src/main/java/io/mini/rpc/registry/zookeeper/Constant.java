@@ -1,4 +1,4 @@
-package io.mini.rpc.zookeeper;
+package io.mini.rpc.registry.zookeeper;
 
 /**
  * @author caohao

@@ -6,6 +6,7 @@ import io.mini.rpc.client.handler.RpcClientInitializer;
 import io.mini.rpc.client.route.RpcLoadBalance2;
 import io.mini.rpc.client.route.RpcLoadBalanceRoundRobin2;
 import io.mini.rpc.protocol.RpcProtocol2;
+import io.mini.rpc.protocol.ServiceInstance;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -39,7 +40,7 @@ public class ConnectionManager2 {
     private static final long WAIT_TIMEOUT = 5000;
 
     private final Map<RpcProtocol2, RpcClientHandler2> connectedServerNodes = new ConcurrentHashMap<>();
-    private final Map<String, List<RpcProtocol2>> serviceInstances = new ConcurrentHashMap<>();
+    private final Map<String, TreeSet<RpcProtocol2>> serviceInstances = new ConcurrentHashMap<>();
 
     private final EventLoopGroup eventLoopGroup = new NioEventLoopGroup(4);
 
@@ -71,7 +72,7 @@ public class ConnectionManager2 {
         return instance;
     }
 
-    public void updateConnectedServer(Map<String, List<RpcProtocol2>> serviceMap) {
+    public void updateConnectedServer(Map<String, TreeSet<RpcProtocol2>> serviceMap) {
         if (!CollectionUtils.isEmpty(serviceMap)) {
             Set<RpcProtocol2> serviceSet = serviceMap.values()
                     .stream()
@@ -101,7 +102,7 @@ public class ConnectionManager2 {
 
     }
 
-    public void updateConnectedServer(String serviceName, List<RpcProtocol2> protocol2s) {
+    public void updateConnectedServer(String serviceName, TreeSet<RpcProtocol2> protocol2s) {
         if (StringUtils.isEmpty(serviceName)) {
             return;
         }
@@ -110,6 +111,48 @@ public class ConnectionManager2 {
         for (RpcProtocol2 protocol : protocol2s) {
             if (!connected.contains(protocol)) {
                 connectServerNode(protocol);
+            }
+        }
+    }
+
+    public void updateConnectedServer(ServiceInstance instance) {
+        if (instance == null) {
+            return;
+        }
+        TreeSet<RpcProtocol2> protocols = serviceInstances.getOrDefault(instance.serviceName, new TreeSet<>());
+        protocols.add(instance.protocol);
+        serviceInstances.put(instance.serviceName, protocols);
+        Set<RpcProtocol2> connected = connectedServerNodes.keySet();
+        if (!connected.contains(instance.protocol)) {
+            connectServerNode(instance.protocol);
+        }
+    }
+
+    public void removeByServiceInstance(ServiceInstance instance) {
+        if (instance == null) {
+            return;
+        }
+        if (serviceInstances.containsKey(instance.serviceName)) {
+            Set<RpcProtocol2> protocolSet = serviceInstances.get(instance.serviceName);
+            if (protocolSet != null) {
+                protocolSet.remove(instance.protocol);
+                if (protocolSet.isEmpty()) {
+                    serviceInstances.remove(instance.serviceName);
+                }
+            }
+        }
+        closeInvalidNode();
+    }
+
+    private void closeInvalidNode() {
+        Set<RpcProtocol2> serviceSet = serviceInstances.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
+        for (RpcProtocol2 protocol : connectedServerNodes.keySet()) {
+            // 该节点下已经没有实例服务
+            if (!serviceSet.contains(protocol)) {
+                removeAndCloseHandler(protocol);
             }
         }
     }
@@ -170,7 +213,7 @@ public class ConnectionManager2 {
             }
         }
 
-        RpcProtocol2 rpcProtocol = loadBalance.route(serviceKey, serviceInstances.getOrDefault(serviceKey, new ArrayList<>()));
+        RpcProtocol2 rpcProtocol = loadBalance.route(serviceKey, new ArrayList<>(serviceInstances.get(serviceKey)));
         RpcClientHandler2 handler = connectedServerNodes.get(rpcProtocol);
         if (handler == null) {
             throw new Exception("Can not get available connection");

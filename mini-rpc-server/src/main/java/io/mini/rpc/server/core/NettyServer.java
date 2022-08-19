@@ -1,6 +1,6 @@
 package io.mini.rpc.server.core;
 
-import io.mini.rpc.server.registry.ServiceRegistry;
+import io.mini.rpc.registry.ServiceRegistry;
 import io.mini.rpc.utils.ServiceUtil;
 import io.mini.rpc.utils.ThreadPoolUtil;
 import io.netty.bootstrap.ServerBootstrap;

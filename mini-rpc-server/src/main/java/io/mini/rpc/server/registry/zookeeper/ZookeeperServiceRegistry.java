@@ -2,10 +2,10 @@ package io.mini.rpc.server.registry.zookeeper;
 
 import io.mini.rpc.protocol.RpcProtocol;
 import io.mini.rpc.protocol.RpcServiceInfo;
-import io.mini.rpc.server.registry.ServiceRegistry;
+import io.mini.rpc.registry.ServiceRegistry;
 import io.mini.rpc.utils.ServiceUtil;
-import io.mini.rpc.zookeeper.Constant;
-import io.mini.rpc.zookeeper.CuratorClient;
+import io.mini.rpc.registry.zookeeper.Constant;
+import io.mini.rpc.registry.zookeeper.CuratorClient;
 import org.apache.curator.framework.state.ConnectionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

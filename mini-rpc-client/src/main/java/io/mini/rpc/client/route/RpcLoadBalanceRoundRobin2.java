@@ -2,7 +2,10 @@ package io.mini.rpc.client.route;
 
 import io.mini.rpc.protocol.RpcProtocol2;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -16,6 +19,7 @@ public class RpcLoadBalanceRoundRobin2 implements RpcLoadBalance2 {
     private RpcProtocol2 doRoute(List<RpcProtocol2> addressList) {
         int size = addressList.size();
         int index = roundRobin.getAndAdd(1) % size;
+
         return addressList.get(index);
     }
 

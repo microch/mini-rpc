@@ -1,4 +1,4 @@
-package io.mini.rpc.client.discovery;
+package io.mini.rpc.registry;
 
 /**
  * @author caohao

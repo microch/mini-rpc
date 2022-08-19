@@ -1,4 +1,4 @@
-package io.mini.rpc.zookeeper;
+package io.mini.rpc.registry.zookeeper;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;

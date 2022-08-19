@@ -2,7 +2,7 @@ package io.mini.rpc.server;
 
 import io.mini.rpc.annotation.MiniRpcService;
 import io.mini.rpc.server.core.NettyServer;
-import io.mini.rpc.server.registry.ServiceRegistry;
+import io.mini.rpc.registry.ServiceRegistry;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -10,7 +10,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**

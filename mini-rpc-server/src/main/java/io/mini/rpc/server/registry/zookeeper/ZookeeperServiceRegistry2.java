@@ -1,11 +1,8 @@
 package io.mini.rpc.server.registry.zookeeper;
 
-import io.mini.rpc.protocol.RpcProtocol;
-import io.mini.rpc.protocol.RpcServiceInfo;
-import io.mini.rpc.server.registry.ServiceRegistry;
-import io.mini.rpc.utils.ServiceUtil;
-import io.mini.rpc.zookeeper.Constant;
-import io.mini.rpc.zookeeper.CuratorClient;
+import io.mini.rpc.registry.ServiceRegistry;
+import io.mini.rpc.registry.zookeeper.Constant;
+import io.mini.rpc.registry.zookeeper.CuratorClient;
 import org.apache.curator.framework.state.ConnectionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +17,7 @@ import java.util.List;
  * @date 2022/8/18
  */
 public class ZookeeperServiceRegistry2 implements ServiceRegistry {
-    private static final Logger logger = LoggerFactory.getLogger(ServiceRegistry.class);
+    private static final Logger logger = LoggerFactory.getLogger(ZookeeperServiceRegistry2.class);
 
     private final CuratorClient curatorClient;
 
@@ -32,21 +29,21 @@ public class ZookeeperServiceRegistry2 implements ServiceRegistry {
     }
 
     @Override
-    public void registerService(String host, int port, Collection<String> keys) {
+    public void registerService(String host, int port, Collection<String> serviceNames) {
         try {
             String node = host + ":" + port;
-            for (String key : keys) {
-                String path = Constant.ZK_REGISTRY_PATH + "/" + key + "/" + node;
-                path = curatorClient.createPathData2(path, key.getBytes(StandardCharsets.UTF_8));
+            for (String serviceName : serviceNames) {
+                String path = Constant.ZK_REGISTRY_PATH + "/" + serviceName + "/" + node;
+                path = curatorClient.createPathData2(path, serviceName.getBytes(StandardCharsets.UTF_8));
                 pathList.add(path);
             }
-            logger.info("Register {} new service, host: {}, port: {}", keys.size(), host, port);
+            logger.info("Register {} new service, host: {}, port: {}", serviceNames.size(), host, port);
         } catch (Exception e) {
             logger.error("Register service fail, exception: {}", e.getMessage());
         }
         curatorClient.addConnectionStateListener((client, newState) -> {
             if (newState == ConnectionState.RECONNECTED) {
-                registerService(host, port, keys);
+                registerService(host, port, serviceNames);
             }
         });
     }
