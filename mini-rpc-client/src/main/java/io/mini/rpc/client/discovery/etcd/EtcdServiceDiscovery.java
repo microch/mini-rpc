@@ -60,6 +60,8 @@ public class EtcdServiceDiscovery implements ServiceDiscovery {
                 }
             });
 
+
+
         } catch (Exception e) {
             logger.error("Get node exception: " + e.getMessage());
         }
