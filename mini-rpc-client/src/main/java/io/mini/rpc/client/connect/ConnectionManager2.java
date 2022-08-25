@@ -1,6 +1,5 @@
 package io.mini.rpc.client.connect;
 
-import io.mini.rpc.client.handler.RpcClientHandler;
 import io.mini.rpc.client.handler.RpcClientHandler2;
 import io.mini.rpc.client.handler.RpcClientInitializer;
 import io.mini.rpc.client.route.RpcLoadBalance2;
@@ -13,7 +12,6 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;

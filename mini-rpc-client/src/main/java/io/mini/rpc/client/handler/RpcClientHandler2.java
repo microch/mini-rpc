@@ -1,11 +1,9 @@
 package io.mini.rpc.client.handler;
 
-import io.mini.rpc.client.connect.ConnectionManager;
 import io.mini.rpc.client.connect.ConnectionManager2;
 import io.mini.rpc.codec.Beat;
 import io.mini.rpc.codec.RpcRequest;
 import io.mini.rpc.codec.RpcResponse;
-import io.mini.rpc.protocol.RpcProtocol;
 import io.mini.rpc.protocol.RpcProtocol2;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;

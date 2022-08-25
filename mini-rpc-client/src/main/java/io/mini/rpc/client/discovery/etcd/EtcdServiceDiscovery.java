@@ -59,9 +59,6 @@ public class EtcdServiceDiscovery implements ServiceDiscovery {
                     }
                 }
             });
-
-
-
         } catch (Exception e) {
             logger.error("Get node exception: " + e.getMessage());
         }
@@ -111,6 +108,5 @@ public class EtcdServiceDiscovery implements ServiceDiscovery {
     public void stop() {
         client.close();
     }
-
 
 }
