@@ -6,7 +6,7 @@ import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchEvent;
 import io.etcd.jetcd.watch.WatchResponse;
-import io.mini.rpc.client.connect.ConnectionManager2;
+import io.mini.rpc.client.connect.ConnectionManager;
 import io.mini.rpc.registry.ServiceDiscovery;
 import io.mini.rpc.protocol.RpcProtocol2;
 import io.mini.rpc.protocol.ServiceInstance;
@@ -51,10 +51,10 @@ public class EtcdServiceDiscovery implements ServiceDiscovery {
                     for (WatchEvent event : watchResponse.getEvents()) {
                         if (event.getEventType() == WatchEvent.EventType.PUT) {
                             ServiceInstance now = getServiceInstanceFromKey(event.getKeyValue());
-                            ConnectionManager2.getInstance().updateConnectedServer(now);
+                            ConnectionManager.getInstance().updateConnectedServer(now);
                         } else if (event.getEventType() == WatchEvent.EventType.DELETE) {
                             ServiceInstance pre = getServiceInstanceFromKey(event.getKeyValue());
-                            ConnectionManager2.getInstance().removeByServiceInstance(pre);
+                            ConnectionManager.getInstance().removeByServiceInstance(pre);
                         }
                     }
                 }
@@ -86,7 +86,7 @@ public class EtcdServiceDiscovery implements ServiceDiscovery {
     }
 
     private void updateConnectedServer(Map<String, TreeSet<RpcProtocol2>> dataMap) {
-        ConnectionManager2.getInstance().updateConnectedServer(dataMap);
+        ConnectionManager.getInstance().updateConnectedServer(dataMap);
     }
 
 

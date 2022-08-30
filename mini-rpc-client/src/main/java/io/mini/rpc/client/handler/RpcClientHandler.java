@@ -1,6 +1,6 @@
 package io.mini.rpc.client.handler;
 
-import io.mini.rpc.client.connect.ConnectionManager2;
+import io.mini.rpc.client.connect.ConnectionManager;
 import io.mini.rpc.codec.Beat;
 import io.mini.rpc.codec.RpcRequest;
 import io.mini.rpc.codec.RpcResponse;
@@ -18,9 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author caohao
  * @date 2022/8/17
  */
-public class RpcClientHandler2 extends SimpleChannelInboundHandler<RpcResponse> {
+public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 
-    private static final Logger logger = LoggerFactory.getLogger(RpcClientHandler2.class);
+    private static final Logger logger = LoggerFactory.getLogger(RpcClientHandler.class);
 
     private final ConcurrentHashMap<String, RpcFuture> pendingRPC = new ConcurrentHashMap<>();
 
@@ -98,6 +98,6 @@ public class RpcClientHandler2 extends SimpleChannelInboundHandler<RpcResponse> 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
-        ConnectionManager2.getInstance().removeHandler(rpcProtocol);
+        ConnectionManager.getInstance().removeHandler(rpcProtocol);
     }
 }

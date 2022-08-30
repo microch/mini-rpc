@@ -1,6 +1,6 @@
 package io.mini.rpc.client.connect;
 
-import io.mini.rpc.client.handler.RpcClientHandler2;
+import io.mini.rpc.client.handler.RpcClientHandler;
 import io.mini.rpc.client.handler.RpcClientInitializer;
 import io.mini.rpc.client.route.RpcLoadBalance2;
 import io.mini.rpc.client.route.RpcLoadBalanceRoundRobin2;
@@ -31,13 +31,13 @@ import java.util.stream.Collectors;
  * @author caohao
  * @date 2022/8/17
  */
-public class ConnectionManager2 {
+public class ConnectionManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(ConnectionManager2.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConnectionManager.class);
 
     private static final long WAIT_TIMEOUT = 5000;
 
-    private final Map<RpcProtocol2, RpcClientHandler2> connectedServerNodes = new ConcurrentHashMap<>();
+    private final Map<RpcProtocol2, RpcClientHandler> connectedServerNodes = new ConcurrentHashMap<>();
     private final Map<String, TreeSet<RpcProtocol2>> serviceInstances = new ConcurrentHashMap<>();
 
     private final EventLoopGroup eventLoopGroup = new NioEventLoopGroup(4);
@@ -47,7 +47,7 @@ public class ConnectionManager2 {
 
     private volatile boolean isRunning = true;
 
-    private static volatile ConnectionManager2 instance;
+    private static volatile ConnectionManager instance;
 
 //    private final CopyOnWriteArraySet<RpcProtocol2> rpcProtocolSet = new CopyOnWriteArraySet<>();
 
@@ -56,14 +56,14 @@ public class ConnectionManager2 {
 
     private final RpcLoadBalance2 loadBalance = new RpcLoadBalanceRoundRobin2();
 
-    private ConnectionManager2() {
+    private ConnectionManager() {
     }
 
-    public static ConnectionManager2 getInstance() {
+    public static ConnectionManager getInstance() {
         if (instance == null) {
-            synchronized (ConnectionManager2.class) {
+            synchronized (ConnectionManager.class) {
                 if (instance == null) {
-                    instance = new ConnectionManager2();
+                    instance = new ConnectionManager();
                 }
             }
         }
@@ -156,7 +156,7 @@ public class ConnectionManager2 {
     }
 
     private void removeAndCloseHandler(RpcProtocol2 protocol) {
-        RpcClientHandler2 handler = connectedServerNodes.get(protocol);
+        RpcClientHandler handler = connectedServerNodes.get(protocol);
         if (handler != null) {
             handler.close();
         }
@@ -183,7 +183,7 @@ public class ConnectionManager2 {
             channelFuture.addListener((ChannelFutureListener) future -> {
                 if (future.isSuccess()) {
                     logger.info("Successfully connect to remote server, remote peer = " + remotePeer);
-                    RpcClientHandler2 handler = future.channel().pipeline().get(RpcClientHandler2.class);
+                    RpcClientHandler handler = future.channel().pipeline().get(RpcClientHandler.class);
                     connectedServerNodes.put(protocol, handler);
                     handler.setRpcProtocol(protocol);
                     signalAvailableHandler();
@@ -200,7 +200,7 @@ public class ConnectionManager2 {
     }
 
 
-    public RpcClientHandler2 chooseHandler(String serviceKey) throws Exception {
+    public RpcClientHandler chooseHandler(String serviceKey) throws Exception {
         int size = connectedServerNodes.values().size();
         while (isRunning && size <= 0) {
             try {
@@ -212,7 +212,7 @@ public class ConnectionManager2 {
         }
 
         RpcProtocol2 rpcProtocol = loadBalance.route(serviceKey, new ArrayList<>(serviceInstances.get(serviceKey)));
-        RpcClientHandler2 handler = connectedServerNodes.get(rpcProtocol);
+        RpcClientHandler handler = connectedServerNodes.get(rpcProtocol);
         if (handler == null) {
             throw new Exception("Can not get available connection");
         }

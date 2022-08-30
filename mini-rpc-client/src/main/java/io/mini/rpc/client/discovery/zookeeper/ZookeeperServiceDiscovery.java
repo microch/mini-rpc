@@ -1,6 +1,6 @@
 package io.mini.rpc.client.discovery.zookeeper;
 
-import io.mini.rpc.client.connect.ConnectionManager2;
+import io.mini.rpc.client.connect.ConnectionManager;
 import io.mini.rpc.registry.ServiceDiscovery;
 import io.mini.rpc.protocol.RpcProtocol2;
 import io.mini.rpc.registry.zookeeper.Constant;
@@ -19,12 +19,12 @@ import java.util.stream.Collectors;
  * @author caohao
  * @date 2022/8/18
  */
-public class ZookeeperServiceDiscovery2 implements ServiceDiscovery {
-    private static final Logger logger = LoggerFactory.getLogger(ZookeeperServiceDiscovery2.class);
+public class ZookeeperServiceDiscovery implements ServiceDiscovery {
+    private static final Logger logger = LoggerFactory.getLogger(ZookeeperServiceDiscovery.class);
 
     private final CuratorClient curatorClient;
 
-    public ZookeeperServiceDiscovery2(String registryAddress) {
+    public ZookeeperServiceDiscovery(String registryAddress) {
         this.curatorClient = new CuratorClient(registryAddress);
         discoveryService();
     }
@@ -80,7 +80,7 @@ public class ZookeeperServiceDiscovery2 implements ServiceDiscovery {
     }
 
     private void updateConnectedServer(Map<String, TreeSet<RpcProtocol2>> dataMap) {
-        ConnectionManager2.getInstance().updateConnectedServer(dataMap);
+        ConnectionManager.getInstance().updateConnectedServer(dataMap);
     }
 
 
@@ -92,7 +92,7 @@ public class ZookeeperServiceDiscovery2 implements ServiceDiscovery {
             try {
                 List<String> instances = curatorClient.getChildren(Constant.ZK_REGISTRY_PATH + "/" + serviceName);
                 Set<RpcProtocol2> protocols = instances.stream().map(RpcProtocol2::new).collect(Collectors.toSet());
-                ConnectionManager2.getInstance().updateConnectedServer(serviceName, new TreeSet<>(protocols));
+                ConnectionManager.getInstance().updateConnectedServer(serviceName, new TreeSet<>(protocols));
             } catch (Exception e) {
                 logger.error("Child update failed,", e);
             }

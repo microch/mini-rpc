@@ -1,7 +1,7 @@
 package io.mini.rpc.client.proxy;
 
-import io.mini.rpc.client.connect.ConnectionManager2;
-import io.mini.rpc.client.handler.RpcClientHandler2;
+import io.mini.rpc.client.connect.ConnectionManager;
+import io.mini.rpc.client.handler.RpcClientHandler;
 import io.mini.rpc.client.handler.RpcFuture;
 import io.mini.rpc.codec.RpcRequest;
 import io.mini.rpc.utils.ServiceUtil;
@@ -61,7 +61,7 @@ public class ObjectProxy implements InvocationHandler {
         }
 
         String serviceKey = ServiceUtil.makeServiceKey(method.getDeclaringClass().getName(), version);
-        RpcClientHandler2 handler = ConnectionManager2.getInstance().chooseHandler(serviceKey);
+        RpcClientHandler handler = ConnectionManager.getInstance().chooseHandler(serviceKey);
         RpcFuture rpcFuture = handler.sendRequest(request);
         return rpcFuture.get();
     }
