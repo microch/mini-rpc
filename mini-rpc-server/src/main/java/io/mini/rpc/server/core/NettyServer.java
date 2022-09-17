@@ -61,7 +61,6 @@ public class NettyServer implements Server {
                     serviceRegistry.registerService(host, port, serviceMap.keySet());
                     logger.info("Server started on port {}", port);
                     future.channel().closeFuture().sync();
-
                 } catch (Exception e) {
                     if (e instanceof InterruptedException) {
                         logger.info("Rpc server remoting server stop");
